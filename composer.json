@@ -1,5 +1,5 @@
 {
-    "name": "creocoder/yii2-nested-sets",
+    "name": "dlds/yii2-nested-sets",
     "description": "The nested sets behavior for the Yii framework",
     "keywords": [
         "yii2",
@@ -8,6 +8,10 @@
     "type": "yii2-extension",
     "license": "BSD-3-Clause",
     "authors": [
+        {
+            "name": "Jiri Svoboda",
+            "email": "jiri.svoboda@dlds.cz"
+        },
         {
             "name": "Alexander Kochetov",
             "email": "creocoder@gmail.com"
@@ -22,7 +26,7 @@
     },
     "autoload": {
         "psr-4": {
-            "creocoder\\nestedsets\\": "src"
+            "dlds\\nestedsets\\": "src"
         }
     }
 }

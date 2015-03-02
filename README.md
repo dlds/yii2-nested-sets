@@ -1,9 +1,9 @@
 # Nested Sets Behavior for Yii 2
 
-[![Build Status](https://img.shields.io/travis/creocoder/yii2-nested-sets/master.svg?style=flat-square)](https://travis-ci.org/creocoder/yii2-nested-sets)
-[![Code Coverage](https://img.shields.io/scrutinizer/coverage/g/creocoder/yii2-nested-sets/master.svg?style=flat-square)](https://scrutinizer-ci.com/g/creocoder/yii2-nested-sets/?branch=master)
-[![Packagist Version](https://img.shields.io/packagist/v/creocoder/yii2-nested-sets.svg?style=flat-square)](https://packagist.org/packages/creocoder/yii2-nested-sets)
-[![Total Downloads](https://img.shields.io/packagist/dt/creocoder/yii2-nested-sets.svg?style=flat-square)](https://packagist.org/packages/creocoder/yii2-nested-sets)
+[![Build Status](https://img.shields.io/travis/dlds/yii2-nested-sets/master.svg?style=flat-square)](https://travis-ci.org/dlds/yii2-nested-sets)
+[![Code Coverage](https://img.shields.io/scrutinizer/coverage/g/dlds/yii2-nested-sets/master.svg?style=flat-square)](https://scrutinizer-ci.com/g/dlds/yii2-nested-sets/?branch=master)
+[![Packagist Version](https://img.shields.io/packagist/v/dlds/yii2-nested-sets.svg?style=flat-square)](https://packagist.org/packages/dlds/yii2-nested-sets)
+[![Total Downloads](https://img.shields.io/packagist/dt/dlds/yii2-nested-sets.svg?style=flat-square)](https://packagist.org/packages/dlds/yii2-nested-sets)
 
 A modern nested sets behavior for the Yii framework utilizing the Modified Preorder Tree Traversal algorithm.
 
@@ -14,13 +14,13 @@ The preferred way to install this extension is through [composer](http://getcomp
 Either run
 
 ```bash
-$ composer require creocoder/yii2-nested-sets
+$ composer require dlds/yii2-nested-sets
 ```
 
 or add
 
 ```
-"creocoder/yii2-nested-sets": "0.9.*"
+"dlds/yii2-nested-sets": "0.9.*"
 ```
 
 to the `require` section of your `composer.json` file.
@@ -54,7 +54,7 @@ To use multiple tree mode uncomment `tree` field.
 Configure model as follows
 
 ```php
-use creocoder\nestedsets\NestedSetsBehavior;
+use dlds\nestedsets\NestedSetsBehavior;
 
 class Menu extends \yii\db\ActiveRecord
 {
@@ -89,7 +89,7 @@ To use multiple tree mode uncomment `treeAttribute` array key inside `behaviors(
 Configure query class as follows
 
 ```php
-use creocoder\nestedsets\NestedSetsQueryBehavior;
+use dlds\nestedsets\NestedSetsQueryBehavior;
 
 class MenuQuery extends \yii\db\ActiveQuery
 {
@@ -244,6 +244,6 @@ $parent = $countries->parents(1)->one();
 
 ## Donating
 
-Support this project and [others by creocoder](https://gratipay.com/creocoder/) via [gratipay](https://gratipay.com/creocoder/).
+Support this project and [others by dlds](https://gratipay.com/dlds/) via [gratipay](https://gratipay.com/dlds/).
 
-[![Support via Gratipay](https://cdn.rawgit.com/gratipay/gratipay-badge/2.3.0/dist/gratipay.svg)](https://gratipay.com/creocoder/)
+[![Support via Gratipay](https://cdn.rawgit.com/gratipay/gratipay-badge/2.3.0/dist/gratipay.svg)](https://gratipay.com/dlds/)

@@ -1,11 +1,11 @@
 <?php
 /**
- * @link https://github.com/creocoder/yii2-nested-sets
+ * @link https://github.com/dlds/yii2-nested-sets
  * @copyright Copyright (c) 2015 Alexander Kochetov
  * @license http://opensource.org/licenses/BSD-3-Clause
  */
 
-namespace creocoder\nestedsets;
+namespace dlds\nestedsets;
 
 use yii\base\Behavior;
 use yii\base\NotSupportedException;
@@ -18,7 +18,7 @@ use yii\db\Expression;
  *
  * @property ActiveRecord $owner
  *
- * @author Alexander Kochetov <creocoder@gmail.com>
+ * @author Alexander Kochetov <dlds@gmail.com>
  */
 class NestedSetsBehavior extends Behavior
 {
