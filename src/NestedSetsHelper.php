@@ -27,7 +27,7 @@ class NestedSetsHelper {
     {
         if (!self::hasNestedSetsBehavior($model))
         {
-            throw new \ErrorException('Autodetecting of save method is now allowed because model has no ' . StringHelper::basename(NestedSetsBehavior::className()) . 'attached.');
+            throw new \ErrorException('Autodetecting of save method is not allowed because model has no ' . StringHelper::basename(NestedSetsBehavior::className()) . 'attached.');
         }
 
         if (!self::areAllNestedAttributesUnsafe($model))
