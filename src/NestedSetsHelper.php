@@ -23,7 +23,7 @@ class NestedSetsHelper {
      * Automatically detects apropriate save function
      * @param \yii\db\ActiveRecord $model
      */
-    public static function save(\yii\db\ActiveRecord $model)
+    public static function save(\yii\db\ActiveRecord $model, $attribute)
     {
         if (!self::hasNestedSetsBehavior($model))
         {
@@ -35,11 +35,14 @@ class NestedSetsHelper {
             throw new \ErrorException(sprintf('All nested sets attributes must be unsafe. Try to remove these attrs [%s, %s, %s, %s] from model rules definition.', $model->treeAttribute, $model->leftAttribute, $model->rightAttribute, $model->depthAttribute));
         }
 
-        $root = ArrayHelper::getValue(\Yii::$app->request->post(), sprintf('%s.%s', $model->formName(), $model->treeAttribute), false);
-
-        if ($model->{$model->treeAttribute} != $root)
+        if (!$model->hasProperty($attribute))
         {
-            $node = $model->findOne($root);
+            throw new \ErrorException(sprintf('Model has no attribute "%s".', $attribute));
+        }
+
+        if ($model->{$model->treeAttribute} != $model->{$attribute})
+        {
+            $node = $model->findOne($model->{$attribute});
 
             if ($node)
             {
