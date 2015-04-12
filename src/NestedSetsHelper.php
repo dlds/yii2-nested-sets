@@ -42,9 +42,6 @@ class NestedSetsHelper {
 
         $newParent = $model->findOne($model->{$attribute});
 
-        //var_dump($model);
-        var_dump($newParent);
-        die();
         if (!$newParent && !$model->isRoot())
         {
             return $model->makeRoot();
