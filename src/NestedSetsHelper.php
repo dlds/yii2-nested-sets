@@ -40,27 +40,24 @@ class NestedSetsHelper {
             throw new \ErrorException(sprintf('Model has no attribute "%s".', $attribute));
         }
 
-        if ($model->{$model->treeAttribute} != $model->{$attribute})
+        $newParent = $model->findOne($model->{$attribute});
+
+        //var_dump($model);
+        var_dump($newParent);
+        die();
+        if (!$newParent && !$model->isRoot())
         {
-            $node = $model->findOne($model->{$attribute});
-
-            if ($node)
-            {
-                return $model->appendTo($node);
-            }
-
-            if (!$model->isRoot())
-            {
-                return $model->makeRoot();
-            }
+            return $model->makeRoot();
         }
 
-        if (!$model->isNewRecord)
-        {
-            return $model->save();
-        }
+        $parent = $model->parents(1)->one();
 
-        return $model->makeRoot();
+        if ($newParent && (!$parent || $newParent->primaryKey != $parent->primaryKey))
+        {
+            return $model->appendTo($newParent);
+        }
+        
+        return $model->save();
     }
 
     /**
