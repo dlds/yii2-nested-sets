@@ -30,7 +30,7 @@ class NestedSetsHelper {
             throw new \ErrorException('Autodetecting of save method is not allowed because model has no ' . StringHelper::basename(NestedSetsBehavior::className()) . 'attached.');
         }
 
-        if (!self::areAllNestedAttributesUnsafe($model))
+        if (!self::areAllNestedAttributesSafe($model))
         {
             throw new \ErrorException(sprintf('All nested sets attributes must be unsafe. Try to remove these attrs [%s, %s, %s, %s] from model rules definition.', $model->treeAttribute, $model->leftAttribute, $model->rightAttribute, $model->depthAttribute));
         }
@@ -74,14 +74,14 @@ class NestedSetsHelper {
      * @param \yii\db\ActiveRecord $model
      * @return boolean
      */
-    private static function areAllNestedAttributesUnsafe(\yii\db\ActiveRecord $model)
+    private static function areAllNestedAttributesSafe(\yii\db\ActiveRecord $model)
     {
-        if ($model->treeAttribute && $model->isAttributeActive($model->treeAttribute))
+        if ($model->treeAttribute && $model->isAttributeSafe($model->treeAttribute))
         {
             return false;
         }
 
-        return !$model->isAttributeActive($model->leftAttribute) && !$model->isAttributeActive($model->rightAttribute) && !$model->isAttributeActive($model->depthAttribute);
+        return !$model->isAttributeSafe($model->leftAttribute) && !$model->isAttributeSafe($model->rightAttribute) && !$model->isAttributeSafe($model->depthAttribute);
     }
 
 }
