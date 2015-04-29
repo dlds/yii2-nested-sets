@@ -223,7 +223,7 @@ class NestedSetsBehavior extends Behavior {
      * @param integer|null $depth the depth
      * @return \yii\db\ActiveQuery
      */
-    public function parents($depth = null)
+    public function parents($depth = null, $sort = SORT_ASC)
     {
         $condition = [
             'and',
@@ -238,7 +238,7 @@ class NestedSetsBehavior extends Behavior {
 
         $this->applyTreeAttributeCondition($condition);
 
-        return $this->owner->find()->andWhere($condition)->addOrderBy([$this->leftAttribute => SORT_ASC]);
+        return $this->owner->find()->andWhere($condition)->addOrderBy([$this->leftAttribute => $sort]);
     }
 
     /**
@@ -246,7 +246,7 @@ class NestedSetsBehavior extends Behavior {
      * @param integer|null $depth the depth
      * @return \yii\db\ActiveQuery
      */
-    public function children($depth = null)
+    public function children($depth = null, $sort = SORT_ASC)
     {
         $condition = [
             'and',
@@ -261,7 +261,7 @@ class NestedSetsBehavior extends Behavior {
 
         $this->applyTreeAttributeCondition($condition);
 
-        return $this->owner->find()->andWhere($condition)->addOrderBy([$this->leftAttribute => SORT_ASC]);
+        return $this->owner->find()->andWhere($condition)->addOrderBy([$this->leftAttribute => $sort]);
     }
 
     /**
