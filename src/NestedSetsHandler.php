@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @copyright Copyright (c) 2014 Digital Deals s.r.o.
  * @license http://www.digitaldeals.cz/license/
@@ -17,7 +16,7 @@ use yii\helpers\StringHelper;
  *
  * @author Jiri Svoboda <jiri.svoboda@dlds.cz>
  */
-class NestedSetsHelper {
+class NestedSetsHandler {
 
     /**
      * Automatically detects apropriate save function
@@ -27,7 +26,7 @@ class NestedSetsHelper {
     {
         if (!self::hasNestedSetsBehavior($model))
         {
-            throw new \ErrorException('Autodetecting of save method is not allowed because model has no ' . StringHelper::basename(NestedSetsBehavior::className()) . 'attached.');
+            throw new \ErrorException('Autodetecting of save method is not allowed because model has no '.StringHelper::basename(NestedSetsBehavior::className()).'attached.');
         }
 
         if (!self::areAllNestedAttributesSafe($model))
@@ -44,16 +43,26 @@ class NestedSetsHelper {
 
         if (!$newParent && !$model->isRoot())
         {
-            return $model->makeRoot();
+            if ($model->treeAttribute)
+            {
+                return $model->makeRoot();
+            }
+
+            $root = $model->find()->roots()->one();
+
+            if ($root)
+            {
+                return $model->appendTo($root);
+            }
         }
 
         $parent = $model->parents(1)->one();
 
-        if ($newParent && (!$parent || $newParent->primaryKey != $parent->primaryKey))
+        if ($newParent && $newParent->primaryKey != $model->primaryKey && (!$parent || $newParent->primaryKey != $parent->primaryKey))
         {
             return $model->appendTo($newParent);
         }
-        
+
         return $model->save();
     }
 
@@ -83,5 +92,4 @@ class NestedSetsHelper {
 
         return !$model->isAttributeSafe($model->leftAttribute) && !$model->isAttributeSafe($model->rightAttribute) && !$model->isAttributeSafe($model->depthAttribute);
     }
-
 }
