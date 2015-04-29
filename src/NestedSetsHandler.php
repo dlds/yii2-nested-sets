@@ -10,7 +10,7 @@ use yii\helpers\ArrayHelper;
 use yii\helpers\StringHelper;
 
 /**
- * NestedSetsBehavior
+ * NestedSetsHandler
  *
  * @property ActiveRecord $owner
  *
