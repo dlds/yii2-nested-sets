@@ -21,14 +21,15 @@ use yii\db\Expression;
  *
  * @author Alexander Kochetov <dlds@gmail.com>
  */
-class NestedSetsBehavior extends Behavior {
+class NestedSetsBehavior extends Behavior
+{
 
     const OPERATION_MAKE_ROOT = 'makeRoot';
     const OPERATION_PREPEND_TO = 'prependTo';
     const OPERATION_APPEND_TO = 'appendTo';
     const OPERATION_INSERT_BEFORE = 'insertBefore';
     const OPERATION_INSERT_AFTER = 'insertAfter';
-    const OPERATION_DELETE_WITH_CHILDREN = 'deleteWithChildren';
+    const OPERATION_DELETE_WITH_DESCENDANTS = 'deleteWithDescendants';
 
     /**
      * @var string|false
@@ -123,8 +124,8 @@ class NestedSetsBehavior extends Behavior {
     }
 
     /**
-     * Creates a node as the previous sibling of the target node if the active
-     * record is new or moves it as the previous sibling of the target node.
+     * Creates a node as the prevSiblingious sibling of the target node if the active
+     * record is new or moves it as the prevSiblingious sibling of the target node.
      * @param ActiveRecord $node
      * @param boolean $runValidation
      * @param array $attributes
@@ -139,8 +140,8 @@ class NestedSetsBehavior extends Behavior {
     }
 
     /**
-     * Creates a node as the next sibling of the target node if the active
-     * record is new or moves it as the next sibling of the target node.
+     * Creates a node as the nextSibling sibling of the target node if the active
+     * record is new or moves it as the nextSibling sibling of the target node.
      * @param ActiveRecord $node
      * @param boolean $runValidation
      * @param array $attributes
@@ -155,39 +156,32 @@ class NestedSetsBehavior extends Behavior {
     }
 
     /**
-     * Deletes a node and its children.
+     * Deletes a node and its descendants.
      * @return integer|false the number of rows deleted or false if
      * the deletion is unsuccessful for some reason.
      * @throws \Exception
      */
-    public function deleteWithChildren()
+    public function deleteWithDescendants()
     {
-        $this->operation = self::OPERATION_DELETE_WITH_CHILDREN;
+        $this->operation = self::OPERATION_DELETE_WITH_DESCENDANTS;
 
-        if (!$this->owner->isTransactional(ActiveRecord::OP_DELETE))
-        {
-            return $this->deleteWithChildrenInternal();
+        if (!$this->owner->isTransactional(ActiveRecord::OP_DELETE)) {
+            return $this->deleteWithDescendantsInternal();
         }
 
         $transaction = $this->owner->getDb()->beginTransaction();
 
-        try
-        {
-            $result = $this->deleteWithChildrenInternal();
+        try {
+            $result = $this->deleteWithDescendantsInternal();
 
-            if ($result === false)
-            {
+            if ($result === false) {
                 $transaction->rollBack();
-            }
-            else
-            {
+            } else {
                 $transaction->commit();
             }
 
             return $result;
-        }
-        catch (\Exception $e)
-        {
+        } catch (\Exception $e) {
             $transaction->rollBack();
             throw $e;
         }
@@ -197,10 +191,9 @@ class NestedSetsBehavior extends Behavior {
      * @return integer|false the number of rows deleted or false if
      * the deletion is unsuccessful for some reason.
      */
-    protected function deleteWithChildrenInternal()
+    protected function deleteWithDescendantsInternal()
     {
-        if (!$this->owner->beforeDelete())
-        {
+        if (!$this->owner->beforeDelete()) {
             return false;
         }
 
@@ -219,11 +212,11 @@ class NestedSetsBehavior extends Behavior {
     }
 
     /**
-     * Gets the parents of the node.
+     * Gets the ancestors of the node.
      * @param integer|null $depth the depth
      * @return \yii\db\ActiveQuery
      */
-    public function parents($depth = null, $sort = SORT_ASC)
+    public function ancestors($depth = null, $sort = SORT_ASC)
     {
         $condition = [
             'and',
@@ -231,8 +224,7 @@ class NestedSetsBehavior extends Behavior {
             ['>', $this->rightAttribute, $this->owner->getAttribute($this->rightAttribute)],
         ];
 
-        if ($depth !== null)
-        {
+        if ($depth !== null) {
             $condition[] = ['>=', $this->depthAttribute, $this->owner->getAttribute($this->depthAttribute) - $depth];
         }
 
@@ -242,11 +234,11 @@ class NestedSetsBehavior extends Behavior {
     }
 
     /**
-     * Gets the children of the node.
+     * Gets the descendants of the node.
      * @param integer|null $depth the depth
      * @return \yii\db\ActiveQuery
      */
-    public function children($depth = null, $sort = SORT_ASC)
+    public function descendants($depth = null, $sort = SORT_ASC)
     {
         $condition = [
             'and',
@@ -254,8 +246,7 @@ class NestedSetsBehavior extends Behavior {
             ['<', $this->rightAttribute, $this->owner->getAttribute($this->rightAttribute)],
         ];
 
-        if ($depth !== null)
-        {
+        if ($depth !== null) {
             $condition[] = ['<=', $this->depthAttribute, $this->owner->getAttribute($this->depthAttribute) + $depth];
         }
 
@@ -265,10 +256,10 @@ class NestedSetsBehavior extends Behavior {
     }
 
     /**
-     * Gets the leaves of the node.
+     * Gets the childlessDescendants of the node.
      * @return \yii\db\ActiveQuery
      */
-    public function leaves()
+    public function childlessDescendants()
     {
         $condition = [
             'and',
@@ -283,10 +274,10 @@ class NestedSetsBehavior extends Behavior {
     }
 
     /**
-     * Gets the previous sibling of the node.
+     * Gets the prevSiblingious sibling of the node.
      * @return \yii\db\ActiveQuery
      */
-    public function prev()
+    public function prevSibling()
     {
         $condition = [$this->rightAttribute => $this->owner->getAttribute($this->leftAttribute) - 1];
         $this->applyTreeAttributeCondition($condition);
@@ -295,10 +286,10 @@ class NestedSetsBehavior extends Behavior {
     }
 
     /**
-     * Gets the next sibling of the node.
+     * Gets the nextSibling sibling of the node.
      * @return \yii\db\ActiveQuery
      */
-    public function next()
+    public function nextSibling()
     {
         $condition = [$this->leftAttribute => $this->owner->getAttribute($this->rightAttribute) + 1];
         $this->applyTreeAttributeCondition($condition);
@@ -310,7 +301,7 @@ class NestedSetsBehavior extends Behavior {
      * Determines whether the node is root.
      * @return boolean whether the node is root
      */
-    public function isRoot()
+    public function isTreeRoot()
     {
         return $this->owner->getAttribute($this->leftAttribute) == 1;
     }
@@ -320,13 +311,78 @@ class NestedSetsBehavior extends Behavior {
      * @param ActiveRecord $node the parent node
      * @return boolean whether the node is child of the parent node
      */
-    public function isChildOf($node)
+    public function isAncestorOf($node)
+    {
+        $result = $this->owner->getAttribute($this->leftAttribute) < $node->getAttribute($this->leftAttribute) && $this->owner->getAttribute($this->rightAttribute) > $node->getAttribute($this->rightAttribute);
+
+        if ($result && $this->treeAttribute !== false) {
+            $result = $this->owner->getAttribute($this->treeAttribute) === $node->getAttribute($this->treeAttribute);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Determines whether the node is child of the parent node.
+     * @param ActiveRecord $node the parent node
+     * @return boolean whether the node is child of the parent node
+     */
+    public function isDescendantOf($node)
     {
         $result = $this->owner->getAttribute($this->leftAttribute) > $node->getAttribute($this->leftAttribute) && $this->owner->getAttribute($this->rightAttribute) < $node->getAttribute($this->rightAttribute);
 
-        if ($result && $this->treeAttribute !== false)
-        {
+        if ($result && $this->treeAttribute !== false) {
             $result = $this->owner->getAttribute($this->treeAttribute) === $node->getAttribute($this->treeAttribute);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Determines whether the node is sibling to given node.
+     * @param ActiveRecord $node the parent node
+     * @return boolean whether the node is child of the parent node
+     */
+    public function isSiblingOf($node)
+    {
+        return $this->isNextSiblingOf($node) || $this->isPrevSiblingOf($node);
+    }
+
+    /**
+     * Determines whether the node is next sibling to given node.
+     * @param ActiveRecord $node the parent node
+     * @return boolean whether the node is child of the parent node
+     */
+    public function isNextSiblingOf($node)
+    {
+        $result = $this->owner->getAttribute($this->leftAttribute) > $node->getAttribute($this->leftAttribute) && $this->owner->getAttribute($this->rightAttribute) > $node->getAttribute($this->rightAttribute);
+
+        if ($result && $this->treeAttribute !== false) {
+            $result = $this->owner->getAttribute($this->treeAttribute) === $node->getAttribute($this->treeAttribute);
+        }
+
+        if ($result) {
+            $result = $this->owner->getAttribute($this->depthAttribute) === $node->getAttribute($this->depthAttribute);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Determines whether the node is previous sibling to given node.
+     * @param ActiveRecord $node the parent node
+     * @return boolean whether the node is child of the parent node
+     */
+    public function isPrevSiblingOf($node)
+    {
+        $result = $this->owner->getAttribute($this->leftAttribute) < $node->getAttribute($this->leftAttribute) && $this->owner->getAttribute($this->rightAttribute) < $node->getAttribute($this->rightAttribute);
+
+        if ($result && $this->treeAttribute !== false) {
+            $result = $this->owner->getAttribute($this->treeAttribute) === $node->getAttribute($this->treeAttribute);
+        }
+
+        if ($result) {
+            $result = $this->owner->getAttribute($this->depthAttribute) === $node->getAttribute($this->depthAttribute);
         }
 
         return $result;
@@ -336,7 +392,7 @@ class NestedSetsBehavior extends Behavior {
      * Determines whether the node is leaf.
      * @return boolean whether the node is leaf
      */
-    public function isLeaf()
+    public function isChildless()
     {
         return $this->owner->getAttribute($this->rightAttribute) - $this->owner->getAttribute($this->leftAttribute) === 1;
     }
@@ -346,8 +402,7 @@ class NestedSetsBehavior extends Behavior {
      */
     public function beforeValidate()
     {
-        if ($this->operation && $this->operation != self::OPERATION_DELETE_WITH_CHILDREN)
-        {
+        if ($this->operation && $this->operation != self::OPERATION_DELETE_WITH_DESCENDANTS) {
             $this->owner->markAttributeDirty($this->treeAttribute);
             $this->owner->markAttributeDirty($this->leftAttribute);
             $this->owner->markAttributeDirty($this->rightAttribute);
@@ -360,13 +415,11 @@ class NestedSetsBehavior extends Behavior {
      */
     public function beforeInsert()
     {
-        if ($this->node !== null && !$this->node->getIsNewRecord())
-        {
+        if ($this->node !== null && !$this->node->getIsNewRecord()) {
             $this->node->refresh();
         }
 
-        switch ($this->operation)
-        {
+        switch ($this->operation) {
             case self::OPERATION_MAKE_ROOT:
                 $this->beforeInsertRootNode();
                 break;
@@ -392,8 +445,7 @@ class NestedSetsBehavior extends Behavior {
      */
     protected function beforeInsertRootNode()
     {
-        if ($this->treeAttribute === false && $this->owner->find()->roots()->exists())
-        {
+        if ($this->treeAttribute === false && $this->owner->find()->isTreeRoot()->exists()) {
             throw new Exception('Can not create more than one root when "treeAttribute" is false.');
         }
 
@@ -409,13 +461,11 @@ class NestedSetsBehavior extends Behavior {
      */
     protected function beforeInsertNode($value, $depth)
     {
-        if ($this->node->getIsNewRecord())
-        {
+        if ($this->node->getIsNewRecord()) {
             throw new Exception('Can not create a node when the target node is new record.');
         }
 
-        if ($depth === 0 && $this->node->isRoot())
-        {
+        if ($depth === 0 && $this->node->isTreeRoot()) {
             throw new Exception('Can not create a node when the target node is root.');
         }
 
@@ -423,8 +473,7 @@ class NestedSetsBehavior extends Behavior {
         $this->owner->setAttribute($this->rightAttribute, $value + 1);
         $this->owner->setAttribute($this->depthAttribute, $this->node->getAttribute($this->depthAttribute) + $depth);
 
-        if ($this->treeAttribute !== false)
-        {
+        if ($this->treeAttribute !== false) {
             $this->owner->setAttribute($this->treeAttribute, $this->node->getAttribute($this->treeAttribute));
         }
 
@@ -436,18 +485,16 @@ class NestedSetsBehavior extends Behavior {
      */
     public function afterInsert()
     {
-        if ($this->operation === self::OPERATION_MAKE_ROOT && $this->treeAttribute !== false)
-        {
+        if ($this->operation === self::OPERATION_MAKE_ROOT && $this->treeAttribute !== false) {
             $this->owner->setAttribute($this->treeAttribute, $this->owner->getPrimaryKey());
             $primaryKey = $this->owner->primaryKey();
 
-            if (!isset($primaryKey[0]))
-            {
+            if (!isset($primaryKey[0])) {
                 throw new Exception('"' . get_class($this->owner) . '" must have a primary key.');
             }
 
             $this->owner->updateAll(
-                    [$this->treeAttribute => $this->owner->getAttribute($this->treeAttribute)], [$primaryKey[0] => $this->owner->getAttribute($this->treeAttribute)]
+                [$this->treeAttribute => $this->owner->getAttribute($this->treeAttribute)], [$primaryKey[0] => $this->owner->getAttribute($this->treeAttribute)]
             );
         }
 
@@ -460,45 +507,37 @@ class NestedSetsBehavior extends Behavior {
      */
     public function beforeUpdate()
     {
-        if ($this->node !== null && !$this->node->getIsNewRecord())
-        {
+        if ($this->node !== null && !$this->node->getIsNewRecord()) {
             $this->node->refresh();
         }
 
-        switch ($this->operation)
-        {
+        switch ($this->operation) {
             case self::OPERATION_MAKE_ROOT:
-                if ($this->treeAttribute === false)
-                {
+                if ($this->treeAttribute === false) {
                     throw new Exception('Can not move a node as the root when "treeAttribute" is false.');
                 }
 
-                if ($this->owner->isRoot())
-                {
+                if ($this->owner->isTreeRoot()) {
                     throw new Exception('Can not move the root node as the root.');
                 }
 
                 break;
             case self::OPERATION_INSERT_BEFORE:
             case self::OPERATION_INSERT_AFTER:
-                if ($this->node->isRoot())
-                {
+                if ($this->node->isTreeRoot()) {
                     throw new Exception('Can not move a node when the target node is root.');
                 }
             case self::OPERATION_PREPEND_TO:
             case self::OPERATION_APPEND_TO:
-                if ($this->node->getIsNewRecord())
-                {
+                if ($this->node->getIsNewRecord()) {
                     throw new Exception('Can not move a node when the target node is new record.');
                 }
 
-                if ($this->owner->equals($this->node))
-                {
+                if ($this->owner->equals($this->node)) {
                     throw new Exception('Can not move a node when the target node is same.');
                 }
 
-                if ($this->node->isChildOf($this->owner))
-                {
+                if ($this->node->isDescendantOf($this->owner)) {
                     throw new Exception('Can not move a node when the target node is child.');
                 }
         }
@@ -509,8 +548,7 @@ class NestedSetsBehavior extends Behavior {
      */
     public function afterUpdate()
     {
-        switch ($this->operation)
-        {
+        switch ($this->operation) {
             case self::OPERATION_MAKE_ROOT:
                 $this->moveNodeAsRoot();
                 break;
@@ -549,17 +587,17 @@ class NestedSetsBehavior extends Behavior {
         $depthAttribute = $db->quoteColumnName($this->depthAttribute);
 
         $this->owner->updateAll(
-                [
+            [
             $this->leftAttribute => new Expression($leftAttribute . sprintf('%+d', 1 - $leftValue)),
             $this->rightAttribute => new Expression($rightAttribute . sprintf('%+d', 1 - $leftValue)),
             $this->depthAttribute => new Expression($depthAttribute . sprintf('%+d', -$depthValue)),
             $this->treeAttribute => $this->owner->getPrimaryKey(),
-                ], [
+            ], [
             'and',
             ['>=', $this->leftAttribute, $leftValue],
             ['<=', $this->rightAttribute, $rightValue],
             [$this->treeAttribute => $treeValue]
-                ]
+            ]
         );
 
         $this->shiftLeftRightAttribute($rightValue + 1, $leftValue - $rightValue - 1);
@@ -578,13 +616,11 @@ class NestedSetsBehavior extends Behavior {
         $depthAttribute = $db->quoteColumnName($this->depthAttribute);
         $depth = $this->node->getAttribute($this->depthAttribute) - $depthValue + $depth;
 
-        if ($this->treeAttribute === false || $this->owner->getAttribute($this->treeAttribute) === $this->node->getAttribute($this->treeAttribute))
-        {
+        if ($this->treeAttribute === false || $this->owner->getAttribute($this->treeAttribute) === $this->node->getAttribute($this->treeAttribute)) {
             $delta = $rightValue - $leftValue + 1;
             $this->shiftLeftRightAttribute($value, $delta);
 
-            if ($leftValue >= $value)
-            {
+            if ($leftValue >= $value) {
                 $leftValue += $delta;
                 $rightValue += $delta;
             }
@@ -593,48 +629,44 @@ class NestedSetsBehavior extends Behavior {
             $this->applyTreeAttributeCondition($condition);
 
             $this->owner->updateAll(
-                    [$this->depthAttribute => new Expression($depthAttribute . sprintf('%+d', $depth))], $condition
+                [$this->depthAttribute => new Expression($depthAttribute . sprintf('%+d', $depth))], $condition
             );
 
-            foreach ([$this->leftAttribute, $this->rightAttribute] as $attribute)
-            {
+            foreach ([$this->leftAttribute, $this->rightAttribute] as $attribute) {
                 $condition = ['and', ['>=', $attribute, $leftValue], ['<=', $attribute, $rightValue]];
                 $this->applyTreeAttributeCondition($condition);
 
                 $this->owner->updateAll(
-                        [$attribute => new Expression($db->quoteColumnName($attribute) . sprintf('%+d', $value - $leftValue))], $condition
+                    [$attribute => new Expression($db->quoteColumnName($attribute) . sprintf('%+d', $value - $leftValue))], $condition
                 );
             }
 
             $this->shiftLeftRightAttribute($rightValue + 1, -$delta);
-        }
-        else
-        {
+        } else {
             $leftAttribute = $db->quoteColumnName($this->leftAttribute);
             $rightAttribute = $db->quoteColumnName($this->rightAttribute);
             $nodeRootValue = $this->node->getAttribute($this->treeAttribute);
 
-            foreach ([$this->leftAttribute, $this->rightAttribute] as $attribute)
-            {
+            foreach ([$this->leftAttribute, $this->rightAttribute] as $attribute) {
                 $this->owner->updateAll(
-                        [$attribute => new Expression($db->quoteColumnName($attribute) . sprintf('%+d', $rightValue - $leftValue + 1))], ['and', ['>=', $attribute, $value], [$this->treeAttribute => $nodeRootValue]]
+                    [$attribute => new Expression($db->quoteColumnName($attribute) . sprintf('%+d', $rightValue - $leftValue + 1))], ['and', ['>=', $attribute, $value], [$this->treeAttribute => $nodeRootValue]]
                 );
             }
 
             $delta = $value - $leftValue;
 
             $this->owner->updateAll(
-                    [
+                [
                 $this->leftAttribute => new Expression($leftAttribute . sprintf('%+d', $delta)),
                 $this->rightAttribute => new Expression($rightAttribute . sprintf('%+d', $delta)),
                 $this->depthAttribute => new Expression($depthAttribute . sprintf('%+d', $depth)),
                 $this->treeAttribute => $nodeRootValue,
-                    ], [
+                ], [
                 'and',
                 ['>=', $this->leftAttribute, $leftValue],
                 ['<=', $this->rightAttribute, $rightValue],
                 [$this->treeAttribute => $this->owner->getAttribute($this->treeAttribute)],
-                    ]
+                ]
             );
 
             $this->shiftLeftRightAttribute($rightValue + 1, $leftValue - $rightValue - 1);
@@ -647,13 +679,11 @@ class NestedSetsBehavior extends Behavior {
      */
     public function beforeDelete()
     {
-        if ($this->owner->getIsNewRecord())
-        {
+        if ($this->owner->getIsNewRecord()) {
             throw new Exception('Can not delete a node when it is new record.');
         }
 
-        if ($this->owner->isRoot() && $this->operation !== self::OPERATION_DELETE_WITH_CHILDREN)
-        {
+        if ($this->owner->isTreeRoot() && $this->operation !== self::OPERATION_DELETE_WITH_DESCENDANTS) {
             throw new NotSupportedException('Method "' . get_class($this->owner) . '::delete" is not supported for deleting root nodes.');
         }
 
@@ -668,12 +698,9 @@ class NestedSetsBehavior extends Behavior {
         $leftValue = $this->owner->getAttribute($this->leftAttribute);
         $rightValue = $this->owner->getAttribute($this->rightAttribute);
 
-        if ($this->owner->isLeaf() || $this->operation === self::OPERATION_DELETE_WITH_CHILDREN)
-        {
+        if ($this->owner->isChildless() || $this->operation === self::OPERATION_DELETE_WITH_DESCENDANTS) {
             $this->shiftLeftRightAttribute($rightValue + 1, $leftValue - $rightValue - 1);
-        }
-        else
-        {
+        } else {
             $condition = [
                 'and',
                 ['>=', $this->leftAttribute, $this->owner->getAttribute($this->leftAttribute)],
@@ -684,11 +711,11 @@ class NestedSetsBehavior extends Behavior {
             $db = $this->owner->getDb();
 
             $this->owner->updateAll(
-                    [
+                [
                 $this->leftAttribute => new Expression($db->quoteColumnName($this->leftAttribute) . sprintf('%+d', -1)),
                 $this->rightAttribute => new Expression($db->quoteColumnName($this->rightAttribute) . sprintf('%+d', -1)),
                 $this->depthAttribute => new Expression($db->quoteColumnName($this->depthAttribute) . sprintf('%+d', -1)),
-                    ], $condition
+                ], $condition
             );
 
             $this->shiftLeftRightAttribute($rightValue + 1, -2);
@@ -706,13 +733,12 @@ class NestedSetsBehavior extends Behavior {
     {
         $db = $this->owner->getDb();
 
-        foreach ([$this->leftAttribute, $this->rightAttribute] as $attribute)
-        {
+        foreach ([$this->leftAttribute, $this->rightAttribute] as $attribute) {
             $condition = ['>=', $attribute, $value];
             $this->applyTreeAttributeCondition($condition);
 
             $this->owner->updateAll(
-                    [$attribute => new Expression($db->quoteColumnName($attribute) . sprintf('%+d', $delta))], $condition
+                [$attribute => new Expression($db->quoteColumnName($attribute) . sprintf('%+d', $delta))], $condition
             );
         }
     }
@@ -722,8 +748,7 @@ class NestedSetsBehavior extends Behavior {
      */
     protected function applyTreeAttributeCondition(&$condition)
     {
-        if ($this->treeAttribute !== false)
-        {
+        if ($this->treeAttribute !== false) {
             $condition = [
                 'and',
                 $condition,

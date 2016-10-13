@@ -48,7 +48,7 @@ class NestedSetsHandler {
                 return $model->makeRoot();
             }
 
-            $root = $model->find()->roots()->one();
+            $root = $model->find()->isTreeRoot()->one();
 
             if ($root)
             {

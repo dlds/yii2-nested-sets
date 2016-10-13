@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @link https://github.com/dlds/yii2-nested-sets
  * @copyright Copyright (c) 2015 Alexander Kochetov
@@ -7,52 +8,130 @@
 
 namespace dlds\nestedsets;
 
-use yii\base\Behavior;
 use yii\db\Expression;
+use yii\base\Behavior;
+use yii\helpers\ArrayHelper;
 
 /**
  * NestedSetsQueryBehavior
  *
  * @property \yii\db\ActiveQuery $owner
  *
- * @author Alexander Kochetov <dlds@gmail.com>
+ * @author Jiri Svoboda <jiri.svoboda@dlds.cz>
  */
 class NestedSetsQueryBehavior extends Behavior
 {
+
     /**
-     * Gets the root nodes.
-     * @return \yii\db\ActiveQuery the owner
+     * Filters only roots nodes
+     * @return \yii\db\ActiveQuery
      */
-    public function roots()
+    public function isTreeRoot()
     {
         $model = new $this->owner->modelClass();
 
-        $this->owner
-            ->andWhere([$model->leftAttribute => 1])
-            ->addOrderBy([$model->primaryKey()[0] => SORT_ASC]);
+        $this->owner->andWhere([$model->leftAttribute => 1]);
 
         return $this->owner;
     }
 
     /**
-     * Gets the leaf nodes.
-     * @return \yii\db\ActiveQuery the owner
+     * Filters nodes which are not roots
+     * @return \yii\db\ActiveQuery
      */
-    public function leaves()
+    public function notTreeRoot()
     {
         $model = new $this->owner->modelClass();
-        $db = $model->getDb();
 
-        $columns = [$model->leftAttribute => SORT_ASC];
-
-        if ($model->treeAttribute !== false) {
-            $columns = [$model->treeAttribute => SORT_ASC] + $columns;
-        }
-
-        $this->owner
-            ->andWhere([$model->rightAttribute => new Expression($db->quoteColumnName($model->leftAttribute) . '+ 1')])
-            ->addOrderBy($columns);
+        $this->owner->andWhere(['<>', $model->leftAttribute, 1]);
 
         return $this->owner;
     }
+
+    /**
+     * Filters only leaves nodes
+     * @return \yii\db\ActiveQuery
+     */
+    public function isTreeLeaf()
+    {
+        $model = new $this->owner->modelClass();
+
+        $expression = new Expression($db->quoteColumnName($model->leftAttribute) . '+ 1');
+        $this->owner->andWhere([$model->rightAttribute => $expression]);
+
+        return $this->owner;
+    }
+
+    /**
+     * Filters nodes which are not leaves
+     * @return \yii\db\ActiveQuery
+     */
+    public function notTreeLeaf()
+    {
+        $model = new $this->owner->modelClass();
+
+        $expression = new Expression($db->quoteColumnName($model->leftAttribute) . '+ 1');
+        $this->owner->andWhere(['>' . $model->rightAttribute, $expression]);
+
+        return $this->owner;
+    }
+
+    /**
+     * Filters only nodes who are ancestors to at least one tree node
+     * @param $depth given descendant depth
+     * @param $lft given descendant lft
+     * @param $rgt given descendant rgt
+     * @return \yii\db\ActiveQuery
+     */
+    public function isTreeAncestor($depth, $lft, $rgt)
+    {
+        $model = new $this->owner->modelClass();
+
+        $this->owner->andWhere(['<', $model->depthAttribute, $depth]);
+        $this->owner->andWhere(['<', $model->leftAttribute, $lft]);
+        $this->owner->andWhere(['>', $model->rightAttribute, $rgt]);
+
+        return $this->owner;
+    }
+
+    /**
+     * Filters only nodes who are descendants of given depth, lft, rgt
+     * @return \yii\db\ActiveQuery
+     */
+    public function isTreeDescendant($depth, $lft, $rgt)
+    {
+        $model = new $this->owner->modelClass();
+
+        $this->owner->andWhere(['>', $model->depthAttribute, $depth]);
+        $this->owner->andWhere(['>', $model->leftAttribute, $lft]);
+        $this->owner->andWhere(['<', $model->rightAttribute, $rgt]);
+
+        return $this->owner;
+    }
+
+    /**
+     * Filters only nodes in given tree depth
+     * @param int $depth
+     * @return \yii\db\ActiveQuery
+     */
+    public function inTreeDepth($depth)
+    {
+        return $this->treeDepthInRange($depth, $depth);
+    }
+
+    /**
+     * Filters only nodes in given tree depth range
+     * @param int $min
+     * @param int $max
+     * @return \yii\db\ActiveQuery
+     */
+    public function inTreeDepthRange($min, $max)
+    {
+        $model = new $this->owner->modelClass();
+
+        $this->andWhere(['>=', $model->depthAttribute, $min]);
+
+        return $this->andWhere(['<=', $model->depthAttribute, $max]);
+    }
+
 }
