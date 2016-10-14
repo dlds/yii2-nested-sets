@@ -1,11 +1,6 @@
-# Nested Sets Behavior for Yii 2
+# Yii 2 Nested Sets Behavior
 
-[![Build Status](https://img.shields.io/travis/dlds/yii2-nested-sets/master.svg?style=flat-square)](https://travis-ci.org/dlds/yii2-nested-sets)
-[![Code Coverage](https://img.shields.io/scrutinizer/coverage/g/dlds/yii2-nested-sets/master.svg?style=flat-square)](https://scrutinizer-ci.com/g/dlds/yii2-nested-sets/?branch=master)
-[![Packagist Version](https://img.shields.io/packagist/v/dlds/yii2-nested-sets.svg?style=flat-square)](https://packagist.org/packages/dlds/yii2-nested-sets)
-[![Total Downloads](https://img.shields.io/packagist/dt/dlds/yii2-nested-sets.svg?style=flat-square)](https://packagist.org/packages/dlds/yii2-nested-sets)
-
-A modern nested sets behavior for the Yii framework utilizing the Modified Preorder Tree Traversal algorithm.
+A modern nested sets behavior for the Yii2 framework utilizing the Modified Preorder Tree Traversal algorithm.
 
 ## Installation
 
@@ -20,34 +15,10 @@ $ composer require dlds/yii2-nested-sets
 or add
 
 ```
-"dlds/yii2-nested-sets": "0.9.*"
+"dlds/yii2-nested-sets": "~1.3.0"
 ```
 
 to the `require` section of your `composer.json` file.
-
-## Migrations
-
-Run the following command
-
-```bash
-$ yii migrate/create create_menu_table
-```
-
-Open the `/path/to/migrations/m_xxxxxx_xxxxxx_create_menu_table.php` file,
-inside the `up()` method add the following
-
-```php
-$this->createTable('{{%menu}}', [
-    'id' => Schema::TYPE_PK,
-    // 'tree' => Schema::TYPE_INTEGER,
-    'lft' => Schema::TYPE_INTEGER . ' NOT NULL',
-    'rgt' => Schema::TYPE_INTEGER . ' NOT NULL',
-    'depth' => Schema::TYPE_INTEGER . ' NOT NULL',
-    'name' => Schema::TYPE_STRING . ' NOT NULL',
-]);
-```
-
-To use multiple tree mode uncomment `tree` field.
 
 ## Configuring
 
@@ -192,7 +163,7 @@ The tree will look like this
 To get all the root nodes
 
 ```php
-$roots = Menu::find()->roots()->all();
+$roots = Menu::find()->isTreeRoot()->all();
 ```
 
 ### Getting the leaves nodes
@@ -200,14 +171,14 @@ $roots = Menu::find()->roots()->all();
 To get all the leaves nodes
 
 ```php
-$leaves = Menu::find()->leaves()->all();
+$leaves = Menu::find()->isTreeLeaf()->all();
 ```
 
 To get all the leaves of a node
 
 ```php
 $countries = Menu::findOne(['name' => 'Countries']);
-$leaves = $countries->leaves()->all();
+$leaves = $countries->isTreeLeaf()->all();
 ```
 
 ### Getting children of a node
@@ -216,14 +187,14 @@ To get all the children of a node
 
 ```php
 $countries = Menu::findOne(['name' => 'Countries']);
-$children = $countries->children()->all();
+$children = $countries->descendants()->all();
 ```
 
 To get the first level children of a node
 
 ```php
 $countries = Menu::findOne(['name' => 'Countries']);
-$children = $countries->children(1)->all();
+$children = $countries->descendants(1)->all();
 ```
 
 ### Getting parents of a node
@@ -232,18 +203,12 @@ To get all the parents of a node
 
 ```php
 $countries = Menu::findOne(['name' => 'Countries']);
-$parents = $countries->parents()->all();
+$parents = $countries->ancestors()->all();
 ```
 
 To get the first parent of a node
 
 ```php
 $countries = Menu::findOne(['name' => 'Countries']);
-$parent = $countries->parents(1)->one();
+$parent = $countries->ancestors(1)->one();
 ```
-
-## Donating
-
-Support this project and [others by dlds](https://gratipay.com/dlds/) via [gratipay](https://gratipay.com/dlds/).
-
-[![Support via Gratipay](https://cdn.rawgit.com/gratipay/gratipay-badge/2.3.0/dist/gratipay.svg)](https://gratipay.com/dlds/)
