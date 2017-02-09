@@ -129,9 +129,9 @@ class NestedSetsQueryBehavior extends Behavior
     {
         $model = new $this->owner->modelClass();
 
-        $this->andWhere(['>=', $model->depthAttribute, $min]);
+        $this->owner->andWhere(['>=', $model->depthAttribute, $min]);
 
-        return $this->andWhere(['<=', $model->depthAttribute, $max]);
+        return $this->owner->andWhere(['<=', $model->depthAttribute, $max]);
     }
 
 }
