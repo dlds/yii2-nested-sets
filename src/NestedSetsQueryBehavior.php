@@ -116,7 +116,7 @@ class NestedSetsQueryBehavior extends Behavior
      */
     public function inTreeDepth($depth)
     {
-        return $this->treeDepthInRange($depth, $depth);
+        return $this->inTreeDepthRange($depth, $depth);
     }
 
     /**
