@@ -8,9 +8,8 @@
 
 namespace dlds\nestedsets;
 
-use yii\db\Expression;
 use yii\base\Behavior;
-use yii\helpers\ArrayHelper;
+use yii\db\Expression;
 
 /**
  * NestedSetsQueryBehavior
@@ -21,6 +20,10 @@ use yii\helpers\ArrayHelper;
  */
 class NestedSetsQueryBehavior extends Behavior
 {
+    /**
+     * @var string|\Closure
+     */
+    public $alias;
 
     /**
      * Filters only roots nodes
@@ -30,7 +33,7 @@ class NestedSetsQueryBehavior extends Behavior
     {
         $model = new $this->owner->modelClass();
 
-        $this->owner->andWhere([$model->leftAttribute => 1]);
+        $this->owner->andWhere([$this->colAlias($model->leftAttribute) => 1]);
 
         return $this->owner;
     }
@@ -43,7 +46,7 @@ class NestedSetsQueryBehavior extends Behavior
     {
         $model = new $this->owner->modelClass();
 
-        $this->owner->andWhere(['<>', $model->leftAttribute, 1]);
+        $this->owner->andWhere(['<>', $this->colAlias($model->leftAttribute), 1]);
 
         return $this->owner;
     }
@@ -56,8 +59,8 @@ class NestedSetsQueryBehavior extends Behavior
     {
         $model = new $this->owner->modelClass();
 
-        $expression = new Expression($db->quoteColumnName($model->leftAttribute) . '+ 1');
-        $this->owner->andWhere([$model->rightAttribute => $expression]);
+        $expression = new Expression($this->colAlias($model->leftAttribute) . '+ 1');
+        $this->owner->andWhere([$this->colAlias($model->rightAttribute) => $expression]);
 
         return $this->owner;
     }
@@ -70,8 +73,8 @@ class NestedSetsQueryBehavior extends Behavior
     {
         $model = new $this->owner->modelClass();
 
-        $expression = new Expression($db->quoteColumnName($model->leftAttribute) . '+ 1');
-        $this->owner->andWhere(['>' . $model->rightAttribute, $expression]);
+        $expression = new Expression($this->colAlias($model->leftAttribute) . '+ 1');
+        $this->owner->andWhere(['>' . $this->colAlias($model->rightAttribute), $expression]);
 
         return $this->owner;
     }
@@ -87,9 +90,9 @@ class NestedSetsQueryBehavior extends Behavior
     {
         $model = new $this->owner->modelClass();
 
-        $this->owner->andWhere(['<', $model->depthAttribute, $depth]);
-        $this->owner->andWhere(['<', $model->leftAttribute, $lft]);
-        $this->owner->andWhere(['>', $model->rightAttribute, $rgt]);
+        $this->owner->andWhere(['<', $this->colAlias($model->depthAttribute), $depth]);
+        $this->owner->andWhere(['<', $this->colAlias($model->leftAttribute), $lft]);
+        $this->owner->andWhere(['>', $this->colAlias($model->rightAttribute), $rgt]);
 
         return $this->owner;
     }
@@ -102,9 +105,9 @@ class NestedSetsQueryBehavior extends Behavior
     {
         $model = new $this->owner->modelClass();
 
-        $this->owner->andWhere(['>', $model->depthAttribute, $depth]);
-        $this->owner->andWhere(['>', $model->leftAttribute, $lft]);
-        $this->owner->andWhere(['<', $model->rightAttribute, $rgt]);
+        $this->owner->andWhere(['>', $this->colAlias($model->depthAttribute), $depth]);
+        $this->owner->andWhere(['>', $this->colAlias($model->leftAttribute), $lft]);
+        $this->owner->andWhere(['<', $this->colAlias($model->rightAttribute), $rgt]);
 
         return $this->owner;
     }
@@ -129,9 +132,20 @@ class NestedSetsQueryBehavior extends Behavior
     {
         $model = new $this->owner->modelClass();
 
-        $this->owner->andWhere(['>=', $model->depthAttribute, $min]);
+        $this->owner->andWhere(['>=', $this->colAlias($model->depthAttribute), $min]);
 
-        return $this->owner->andWhere(['<=', $model->depthAttribute, $max]);
+        return $this->owner->andWhere(['<=', $this->colAlias($model->depthAttribute), $max]);
     }
 
+    /**
+     * @param $column
+     */
+    public function colAlias($column)
+    {
+        if (is_callable($this->alias)) {
+            return \Yii::$app->db->quoteColumnName(call_user_func($this->alias, $column));
+        }
+
+        return \Yii::$app->db->quoteColumnName(sprintf('%s.%s', $this->alias, $column));
+    }
 }
